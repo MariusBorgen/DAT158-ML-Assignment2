@@ -2,6 +2,9 @@
 __pycache__/
 *.py[codz]
 *$py.class
+.venv/
+data/faces/
+models/face_recognition_custom.joblib
 
 # C extensions
 *.so

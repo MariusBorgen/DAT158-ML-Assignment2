@@ -3,7 +3,8 @@ import cv2
 import time
 from pathlib import Path
 
-PERSON_NAME = "Marius"
+# Endre navnet til person som kjører capture_faces
+PERSON_NAME = "David"
 MAX_IMAGES = 50
 SAVE_INTERVAL = 0.3
 
@@ -33,9 +34,17 @@ try:
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+
+        # Krev et større ansiktsområde.
+        min_face_size = max(80, int(gray.shape[0] * 0.25))
+
+        detection_image = cv2.equalizeHist(gray)
+
         faces = detector.detectMultiScale(
-            gray, scaleFactor=1.1,
-            minNeighbors=5, minSize=(80, 80)
+            detection_image,
+            scaleFactor=1.05,
+            minNeighbors=6,
+            minSize=(min_face_size, min_face_size),
         )
 
         if len(faces) > 0:

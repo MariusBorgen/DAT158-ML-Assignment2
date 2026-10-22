@@ -1,21 +1,21 @@
+"""Finn ett ansikt i kameraet og vis navn hvis modellen godtar treffet."""
 import time
 
 import cv2
 import joblib
-import numpy as np
+from face_utils import ROOT, NAMES, MIN_CONFIDENCE, prepare_face, face_features, detect_faces, decide
+# Les modellen som train.py har lagret.
+model = joblib.load(ROOT / "models/face_recognition_custom.joblib")
 
+if not hasattr(model, "predict_proba"):
+    raise RuntimeError(
+        "Modellen mangler sannsynlighetsestimat. "
+        "Kjør python src/train.py og start gjenkjenningen på nytt."
+    )
 
-model = joblib.load("models/face_recognition_custom.joblib")
+SCAN_INTERVAL = 0.3  # Sekunder mellom hver prediksjon.
 
-names = {
-    40: "Marius",
-    41: "Endre",
-    42: "David",
-}
-
-REQUIRED_MATCHES = 10
-SCAN_INTERVAL = 0.3
-
+# Detektoren finner hvor ansiktet er. Modellen bestemmer hvem det er.
 detector = cv2.CascadeClassifier(
     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
 )
@@ -25,8 +25,7 @@ camera = cv2.VideoCapture(0)
 if not camera.isOpened():
     raise RuntimeError("Kunne ikke åpne kameraet.")
 
-last_prediction = None
-match_count = 0
+recognized = False
 last_scan = 0
 message = "Looking for face..."
 
@@ -37,28 +36,17 @@ try:
         if not success:
             break
 
+        # Ett kamerabilde om gangen, gjort om til gråtoner.
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        detection_image = cv2.equalizeHist(gray)
+        faces = detect_faces(detector, gray)
 
-        min_face_size = max(80, int(gray.shape[0] * 0.25))
-
-        faces = detector.detectMultiScale(
-            detection_image,
-            scaleFactor=1.05,
-            minNeighbors=6,
-            minSize=(min_face_size, min_face_size),
-        )
-
-        # Krev nøyaktig ett ansikt i bildet.
         if len(faces) != 1:
-            last_prediction = None
-            match_count = 0
+            recognized = False
 
-            message = (
-                "Looking for face..."
-                if len(faces) == 0
-                else "Only one person at a time"
-            )
+            if len(faces) == 0:
+                message = "Looking for face..."
+            else:
+                message = "Only one person at a time"
 
         else:
             x, y, w, h = faces[0]
@@ -67,12 +55,11 @@ try:
                 last_scan = time.monotonic()
 
                 # Samme bildeformat som under trening.
-                face = gray[y:y + h, x:x + w]
-                face = cv2.resize(face, (64, 64))
-                features = face.astype(np.float32) / 255.0
-                features = features.flatten().reshape(1, -1)
+                face = prepare_face(gray, (x, y, w, h))
+                # Modellen forventer en liste med bilder, selv når vi har bare ett.
+                features = [face_features(face)]
 
-                # Forstørr bare visningen. Modellen får fortsatt 64 × 64.
+                # Bare forhåndsvisningen forstørres. Modellen får 64 x 64.
                 preview = cv2.resize(
                     face,
                     (320, 320),
@@ -81,38 +68,26 @@ try:
 
                 cv2.imshow("Bildet modellen ser", preview)
 
-                prediction = int(model.predict(features)[0])
+                # Bruk klassene i modellen: sannsynlighetskolonnene er ikke navn.
+                labels, confidences, accepted = decide(model, features)
+                # [0] henter resultatet for det ene bildet vi sendte inn.
+                prediction = int(labels[0])
+                confidence = float(confidences[0])
 
-                if prediction not in names:
-                    last_prediction = None
-                    match_count = 0
+                recognized = bool(accepted[0])
+                if confidence <= MIN_CONFIDENCE:
+                    message = f"Uncertain ({confidence:.1%}) - try again"
+
+                elif prediction not in NAMES:
                     message = "Person not recognized"
 
                 else:
-                    if prediction == last_prediction:
-                        match_count = min(
-                            match_count + 1,
-                            REQUIRED_MATCHES,
-                        )
-                    else:
-                        last_prediction = prediction
-                        match_count = 1
+                    name = NAMES[prediction]
+                    message = f"Welcome home, {name}! ({confidence:.1%})"
 
-                    name = names[prediction]
-
-                    if match_count >= REQUIRED_MATCHES:
-                        message = f"Welcome home, {name}!"
-                    else:
-                        message = (
-                            f"Checking {name}: "
-                            f"{match_count}/{REQUIRED_MATCHES}"
-                        )
-
-            color = (
-                (0, 255, 0)
-                if match_count >= REQUIRED_MATCHES
-                else (0, 200, 255)
-            )
+            color = (0, 200, 255)  # Gul mens treffet ikke er godkjent.
+            if recognized:
+                color = (0, 255, 0)  # Grønn når navnet vises.
 
             cv2.rectangle(
                 frame,
@@ -138,5 +113,6 @@ try:
             break
 
 finally:
+    # Lukk kamera og vinduer, også hvis en feil oppstår.
     camera.release()
     cv2.destroyAllWindows()

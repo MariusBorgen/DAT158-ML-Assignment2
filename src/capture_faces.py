@@ -1,30 +1,39 @@
-
+"""Ta ansiktsbilder og lagre dem i mappen til valgt person."""
 import cv2
 import time
-from pathlib import Path
+from datetime import datetime
+import argparse
+from face_utils import ROOT, PERSON_LABELS, prepare_face, detect_faces
 
-# Endre navnet til person som kjører capture_faces
-PERSON_NAME = "David"
-MAX_IMAGES = 50
+# Innstillinger du kan endre.
+PERSON_NAME = "Marius"
+MAX_IMAGES = 100
 SAVE_INTERVAL = 0.3
 
-save_dir = Path("data") / "faces" / PERSON_NAME
+# --person lar deg velge navn fra terminalen uten å endre denne filen.
+parser = argparse.ArgumentParser()
+parser.add_argument("--person", choices=PERSON_LABELS, default=PERSON_NAME)
+args = parser.parse_args()
+save_dir = ROOT / "data" / "faces" / args.person
 save_dir.mkdir(parents=True, exist_ok=True)
+session_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+session_files = []  # Bare filene som lagres i denne kjøringen.
 
+# OpenCV har en ferdig detektor som finner ansiktsrektangelet.
 detector = cv2.CascadeClassifier(
     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
 )
 
-camera = cv2.VideoCapture(0)
+camera = cv2.VideoCapture(0)  # 0 er standardkameraet.
 
 if not camera.isOpened():
     raise RuntimeError("Kunne ikke åpne kameraet.")
 
-count = 0
 last_capture = 0
 capturing = False
 
 print("S = Start | P = Pause | R = Reset | Q = Quit")
+print(f"Saving to {save_dir}. R resets only this session.")
 
 try:
     while True:
@@ -32,50 +41,40 @@ try:
         if not ret:
             break
 
+        # frame er ett kamerabilde. gray er det samme bildet i gråtoner.
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = detect_faces(detector, gray)
 
-
-        # Krev et større ansiktsområde.
-        min_face_size = max(80, int(gray.shape[0] * 0.25))
-
-        detection_image = cv2.equalizeHist(gray)
-
-        faces = detector.detectMultiScale(
-            detection_image,
-            scaleFactor=1.05,
-            minNeighbors=6,
-            minSize=(min_face_size, min_face_size),
-        )
-
-        if len(faces) > 0:
-            x, y, w, h = max(
-                faces, key=lambda face: face[2] * face[3]
-            )
+        if len(faces) == 1:
+            x, y, w, h = faces[0]  # Venstre kant, topp, bredde og høyde.
 
             cv2.rectangle(
                 frame, (x, y), (x+w, y+h),
                 (0, 255, 0), 2
             )
 
-            if capturing and count < MAX_IMAGES:
-                if time.time() - last_capture >= SAVE_INTERVAL:
-                    face = gray[y:y+h, x:x+w]
-                    face = cv2.resize(face, (64, 64))
+            enough_time = time.monotonic() - last_capture >= SAVE_INTERVAL
+            if capturing and len(session_files) < MAX_IMAGES and enough_time:
+                face = prepare_face(gray, (x, y, w, h))
+                # Tidsstempel beskytter gamle opptak mot overskriving.
+                filename = save_dir / f"{session_id}_face_{len(session_files):03d}.png"
+                if cv2.imwrite(str(filename), face):
+                    session_files.append(filename)
+                    last_capture = time.monotonic()
 
-                    filename = save_dir / f"face_{count:03d}.png"
-                    if cv2.imwrite(str(filename), face):
-                        count += 1
-                        last_capture = time.time()
-
-        if count >= MAX_IMAGES:
+        if len(session_files) >= MAX_IMAGES:
             capturing = False
 
-        status = "RECORDING" if capturing else "READY / PAUSED"
-        if count >= MAX_IMAGES:
+        status = "READY / PAUSED"
+        if capturing:
+            status = "RECORDING"
+        if len(session_files) >= MAX_IMAGES:
             status = "COMPLETED"
+        elif len(faces) != 1:
+            status = "Need exactly one face"
 
         cv2.putText(
-            frame, f"{status} - {count}/{MAX_IMAGES}",
+            frame, f"{status} - {len(session_files)}/{MAX_IMAGES}",
             (20, 40), cv2.FONT_HERSHEY_SIMPLEX,
             0.8, (0, 255, 0), 2
         )
@@ -89,10 +88,10 @@ try:
 
         cv2.imshow("Capture Faces - DAT158", frame)
 
-        key = cv2.waitKey(1) & 0xFF
+        key = cv2.waitKey(1) & 0xFF  # Les en tast uten å stoppe kameravisningen.
 
         if key == ord("s"):
-            if count < MAX_IMAGES:
+            if len(session_files) < MAX_IMAGES:
                 capturing = True
                 last_capture = 0
 
@@ -101,16 +100,18 @@ try:
 
         elif key == ord("r"):
             capturing = False
-            for file in save_dir.glob("face_*.png"):
+            # R fjerner bare denne øktens bilder, aldri eldre bilder.
+            for file in session_files:
                 file.unlink()
-            count = 0
+            session_files.clear()
             last_capture = 0
 
         elif key == ord("q"):
             break
 
 finally:
+    # Frigjør kameraet også hvis programmet stopper med en feil.
     camera.release()
     cv2.destroyAllWindows()
 
-print(f"Saved {count} images in {save_dir}")
+print(f"Saved {len(session_files)} images in {save_dir}")

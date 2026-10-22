@@ -15,7 +15,6 @@ Start med én fil om gangen og følg kommentarene ovenfra og ned.
 `fit` trener modellen. `predict_proba` beregner sannsynligheter.
 `decide` velger høyeste sannsynlighet og sjekker om navnet kan vises.
 PCA reduserer antall tall per bilde; SVM lærer å skille personene.
-Filene i `tests/` kontrollerer programkoden, ikke modellens treffsikkerhet.
 
 ## Opptak
 

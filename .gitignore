@@ -6,7 +6,7 @@ __pycache__/
 data/faces/
 models/face_recognition_custom.joblib
 reports/*.npz
-reports/figures/*feilklassifiserte*.png
+reports/figures/
 
 # C extensions
 *.so

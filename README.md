@@ -3,6 +3,24 @@
 Kjør kommandoene fra prosjektmappen med prosjektets Python-miljø.
 
 # VIKTIG, KJØR " pip install "opencv-python<5" " I TERMINAL FOR Å KUNNE BRUKE PROGRAMMET
+## Kom i gang på Windows
+
+Installer Python (prosjektet er testet med 3.13). Åpne PowerShell i prosjektmappen og kjør:
+
+```powershell
+.\setup.ps1
+```
+
+Dette oppretter `.venv`, installerer avhengighetene (inkludert OpenCV) og sjekker om modellen finnes.
+Miljøet trenger ikke aktiveres. Med modellfilen på plass starter du slik:
+
+```powershell
+.\.venv\Scripts\python.exe src/recognize_face.py
+```
+
+Private bilder og modeller følger ikke med fra GitHub; skriptet forklarer hva du gjør hvis modellen mangler.
+Hvis PowerShell blokkerer skriptet, kjør `powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1`.
+Dette gjelder bare den prosessen og endrer ikke maskinens lagrede policy.
 
 ## Slik leser du koden
 

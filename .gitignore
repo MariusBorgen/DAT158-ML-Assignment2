@@ -223,3 +223,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Private face archives and derived analysis artifacts
+data/faces.zip
+data/faces*.zip
+reports/comparison_*/
+reports/model_analysis/
+reports/archive/

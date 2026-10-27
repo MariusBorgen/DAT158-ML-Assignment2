@@ -50,9 +50,15 @@ print("Tilfeldig bildedeling er en enklere test enn en ny kameraøkt.")
 
 # 3. Lag PCA- og SVM-modellen.
 model = Pipeline([
-    ("pca", PCA(n_components=100, whiten=True, random_state=42)),
-    ("svm", SVC(kernel="rbf", C=10, probability=True, random_state=42))
+    ("pca", PCA(n_components=100, whiten=False, random_state=42)),
+    ("svm", SVC(kernel="rbf", C=20, probability=True, random_state=42))
 ])
+
+# Parameter	Betydning
+# kernel = "rbf"	Gjør det mulig å skille ansikter med ikke-lineære beslutningsgrenser.
+# C = 10	        Kontrollerer hvor kraftig feilklassifisering under trening straffes.
+
+
 
 print("\nTrener modellen...")
 # 4. Tren modellen.

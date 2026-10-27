@@ -7,7 +7,7 @@ from face_utils import ROOT, PERSON_LABELS, prepare_face, detect_faces
 
 # Innstillinger du kan endre.
 PERSON_NAME = "Marius"
-MAX_IMAGES = 100
+MAX_IMAGES = 150
 SAVE_INTERVAL = 0.3
 
 # --person lar deg velge navn fra terminalen uten å endre denne filen.

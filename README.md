@@ -2,7 +2,7 @@
 
 Kjør kommandoene fra prosjektmappen med prosjektets Python-miljø.
 
-# VIKTIG, KJØR "pip install "opencv-python<5" I TERMINAL FOR Å KUNNE BRUKE PROGRAMMET
+# VIKTIG, KJØR " pip install "opencv-python<5" " I TERMINAL FOR Å KUNNE BRUKE PROGRAMMET
 
 ## Slik leser du koden
 

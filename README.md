@@ -2,7 +2,6 @@
 
 Kjør kommandoene fra prosjektmappen med prosjektets Python-miljø.
 
-# VIKTIG, KJØR " pip install "opencv-python<5" " I TERMINAL FOR Å KUNNE BRUKE PROGRAMMET
 ## Kom i gang på Windows
 
 Installer Python (prosjektet er testet med 3.13). Åpne PowerShell i prosjektmappen og kjør:
@@ -12,6 +11,7 @@ Installer Python (prosjektet er testet med 3.13). Åpne PowerShell i prosjektmap
 ```
 
 Dette oppretter `.venv`, installerer avhengighetene (inkludert OpenCV) og sjekker om modellen finnes.
+OpenCV er låst til versjon 4.11.0.86, slik at alle får samme versjon.
 Miljøet trenger ikke aktiveres. Med modellfilen på plass starter du slik:
 
 ```powershell
@@ -38,10 +38,10 @@ PCA reduserer antall tall per bilde; SVM lærer å skille personene.
 
 ## Opptak
 
-Velg person (`Marius`, `Endre` eller `David`):
+Start opptaket og skriv navnet på personen foran kameraet:
 
 ```powershell
-python src/capture_faces.py --person Marius
+python src/capture_faces.py
 ```
 
 S starter, P pauser, Q avslutter. R sletter bare bilder fra den aktive

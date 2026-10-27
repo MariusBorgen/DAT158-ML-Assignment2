@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 .venv/
 data/faces/
+data/people.json
+.gradio/
+data/gradio/
 models/face_recognition_custom.joblib
 reports/*.npz
 reports/figures/

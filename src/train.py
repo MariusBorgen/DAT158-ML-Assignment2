@@ -35,6 +35,7 @@ for name, label in PERSON_LABELS.items():
             seen.add(image_key)
     if len(images) < 10:
         raise ValueError(f"Need at least 10 unique images for {name}.")
+    images = images[:60] # Antall bilder per person i modellen
     training, testing = train_test_split(images, test_size=0.2, random_state=30)
     X_train.extend(training)
     X_test.extend(testing)

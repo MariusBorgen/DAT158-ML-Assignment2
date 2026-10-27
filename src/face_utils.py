@@ -14,7 +14,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 
 # Modellen bruker tall som personnavn. Olivetti bruker tallene 0 til 39.
-PERSON_LABELS = {"Marius": 40, "Endre": 41, "David": 42}
+PERSON_LABELS = {"Marius": 40, "Endre": 41, "David": 42, "Oyvind": 43}
 NAMES = {}
 for name, label in PERSON_LABELS.items():
     NAMES[label] = name

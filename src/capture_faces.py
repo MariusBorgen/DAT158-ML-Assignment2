@@ -6,7 +6,7 @@ import argparse
 from face_utils import ROOT, PERSON_LABELS, prepare_face, detect_faces
 
 # Innstillinger du kan endre.
-PERSON_NAME = "Marius"
+PERSON_NAME = input("Enter your name")
 MAX_IMAGES = 150
 SAVE_INTERVAL = 0.3
 

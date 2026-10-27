@@ -2,6 +2,8 @@
 
 Kjør kommandoene fra prosjektmappen med prosjektets Python-miljø.
 
+# VIKTIG, KJØR "pip install opencv-python" I TERMINAL FOR Å KUNNE BRUKE PROGRAMMET
+
 ## Slik leser du koden
 
 1. `src/capture_faces.py`: åpner kameraet og lagrer ansiktsbilder.

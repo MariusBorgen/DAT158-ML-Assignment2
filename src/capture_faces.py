@@ -23,13 +23,20 @@ def main():
             args.person = register_person(args.register)
         except (ValueError, OSError) as error:
             parser.error(str(error))
-    if not PERSON_LABELS:
-        parser.error('Ingen registrerte personer. Bruk --register "Navn" eller registrer i appen.')
     if args.person is None:
         print("Registrerte personer: " + ", ".join(PERSON_LABELS))
         args.person = input("Velg person: ").strip()
-        if args.person not in PERSON_LABELS:
-            parser.error("Ugyldig navn. Velg blant: " + ", ".join(PERSON_LABELS))
+        existing_name = next(
+            (name for name in PERSON_LABELS if name.casefold() == args.person.casefold()),
+            None,
+        )
+        if existing_name is not None:
+            args.person = existing_name
+        else:
+            try:
+                args.person = register_person(args.person)
+            except (ValueError, OSError) as error:
+                parser.error(str(error))
     save_dir = ROOT / "data" / ("evaluation" if args.evaluation else "faces") / args.person
     save_dir.mkdir(parents=True, exist_ok=True)
     session_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")

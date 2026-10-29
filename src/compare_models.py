@@ -24,7 +24,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from threadpoolctl import threadpool_limits
 
-from face_utils import ROOT, PERSON_LABELS, load_person_images
+from face_utils import ROOT, PERSON_LABELS, select_person_images
 
 # ==================== INNSTILLINGER ====================
 
@@ -96,18 +96,7 @@ def load_training_data():
     y_train = list(y_train)
 
     for name, label in PERSON_LABELS.items():
-        # Identiske private bilder skal bare telles én gang, akkurat som i train.py.
-        images = []
-        seen = set()
-        for image in load_person_images(name):
-            image_key = image.tobytes()
-            if image_key not in seen:
-                images.append(image)
-                seen.add(image_key)
-
-        if len(images) < 10:
-            raise ValueError(f"Trenger minst 10 unike bilder av {name}.")
-
+        images = select_person_images(name)
         training, _ = train_test_split(images, test_size=0.2, random_state=30)
         X_train.extend(training)
         y_train.extend([label] * len(training))

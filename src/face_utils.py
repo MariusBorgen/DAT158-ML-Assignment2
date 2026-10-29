@@ -84,3 +84,32 @@ def load_person_images(name):
             raise ValueError(f"Kunne ikke lese: {path}")
         images.append(face_features(image))
     return images
+
+
+def select_person_images(name):
+    """Første 100 unike bilder i filnavnrekkefølge; felles for trening og analyse."""
+    images, seen = [], set()
+    for image in load_person_images(name):
+        key = image.tobytes()
+        if key not in seen:
+            images.append(image)
+            seen.add(key)
+    if len(images) < 10:
+        raise ValueError(f"Trenger minst 10 unike bilder av {name}.")
+    return images[:100]
+
+
+def load_model(path=None):
+    """Les bare en betrodd modell mottatt privat eller trent lokalt."""
+    import joblib
+    path = Path(path) if path is not None else ROOT / "models/face_recognition_custom.joblib"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"Modellfilen mangler: {path}. Motta modellen privat eller kjør python src/train.py."
+        )
+    model = joblib.load(path)
+    if not hasattr(model, "predict_proba"):
+        raise ValueError("Modellen mangler predict_proba. Tren modellen på nytt.")
+    if not set(PERSON_LABELS.values()).issubset(set(model.classes_)):
+        raise ValueError("Modellens personnummer samsvarer ikke med PERSON_LABELS.")
+    return model

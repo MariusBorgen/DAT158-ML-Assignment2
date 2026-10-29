@@ -38,7 +38,7 @@ try {
     # 3. Sjekk importene og at OpenCV finner ansiktsdetektoren.
     Write-Host '3/3 Kontrollerer installasjonen ...'
     $check = @'
-import cv2, joblib, matplotlib, numpy, scipy, sklearn, threadpoolctl
+import cv2, gradio, joblib, matplotlib, numpy, scipy, sklearn, threadpoolctl
 detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 assert not detector.empty(), 'OpenCV fant ikke ansiktsdetektoren.'
 print('OpenCV:', cv2.__version__)

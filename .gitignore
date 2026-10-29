@@ -233,3 +233,6 @@ data/faces*.zip
 reports/comparison_*/
 reports/model_analysis/
 reports/archive/
+
+data/evaluation/
+models/*.joblib

@@ -48,7 +48,12 @@ class AnalysisChecks(unittest.TestCase):
                 np.testing.assert_array_equal(pca.transform.call_args.args[0], X[validation])
 
     def test_training_data_matches_existing_train_script(self):
-        data = fetch_olivetti_faces(download_if_missing=False)
+        try:
+            data = fetch_olivetti_faces(download_if_missing=False)
+        except OSError:
+            self.skipTest("Olivetti er ikke lastet ned lokalt.")
+        if any(len(load_person_images(name)) < 10 for name in PERSON_LABELS):
+            self.skipTest("Private treningsbilder mangler.")
         X, _, y, _ = train_test_split(data.data, data.target, test_size=.2,
                                       random_state=30, stratify=data.target)
         X, y = list(X), list(y)
@@ -58,7 +63,7 @@ class AnalysisChecks(unittest.TestCase):
                 if image.tobytes() not in seen:
                     images.append(image)
                     seen.add(image.tobytes())
-            training, _ = train_test_split(images, test_size=.2, random_state=30)
+            training, _ = train_test_split(images[:100], test_size=.2, random_state=30)
             X.extend(training)
             y.extend([label] * len(training))
         actual_X, actual_y, _ = load_training_data()

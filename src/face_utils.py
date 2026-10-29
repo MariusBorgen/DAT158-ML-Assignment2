@@ -6,6 +6,9 @@ De andre filene importerer funksjonene slik at de bruker samme regler.
 Denne filen trener ikke modellen og åpner ikke kameraet selv.
 """
 from pathlib import Path
+import json
+import re
+import threading
 
 import cv2
 import numpy as np
@@ -13,11 +16,57 @@ import numpy as np
 # Finn prosjektmappen, uansett hvilken mappe programmet startes fra.
 ROOT = Path(__file__).resolve().parents[1]
 
-# Modellen bruker tall som personnavn. Olivetti bruker tallene 0 til 39.
-PERSON_LABELS = {"Marius": 40, "Endre": 41, "David": 42, "Oyvind": 43}
+# Olivetti bruker ID-ene 0–39. Lokale personer starter på 40.
+PERSON_LABELS = {}
 NAMES = {}
-for name, label in PERSON_LABELS.items():
-    NAMES[label] = name
+_registry_lock = threading.Lock()
+
+
+def refresh_people():
+    path = ROOT / "data" / "people.json"
+    people = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    if (not isinstance(people, dict)
+            or any(not isinstance(name, str) or not valid_person_name(name)
+                   or type(label) is not int or label < 40
+                   for name, label in people.items())
+            or len(set(people.values())) != len(people)):
+        raise ValueError("Ugyldig personregister i data/people.json.")
+    PERSON_LABELS.clear()
+    PERSON_LABELS.update(people)
+    NAMES.clear()
+    NAMES.update({label: name for name, label in people.items()})
+    return PERSON_LABELS
+
+
+def valid_person_name(name):
+    return (bool(name) and name == name.strip() and len(name) <= 100
+            and not re.search(r'[<>:"/\\|?*\x00-\x1f]', name)
+            and not name.endswith(".")
+            and name.split(".")[0].upper() not in
+            {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)),
+             *(f"LPT{i}" for i in range(1, 10))})
+
+
+def register_person(name):
+    name = name.strip()
+    if not valid_person_name(name):
+        raise ValueError("Skriv et gyldig navn uten filsti eller spesialtegn.")
+    with _registry_lock:
+        refresh_people()
+        if any(existing.casefold() == name.casefold() for existing in PERSON_LABELS):
+            raise ValueError("Personen er allerede registrert.")
+        people = dict(PERSON_LABELS)
+        people[name] = max(people.values(), default=39) + 1
+        path = ROOT / "data" / "people.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(people, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        temporary.replace(path)
+        refresh_people()
+    return name
+
+
+refresh_people()
 
 MIN_CONFIDENCE = 0.50  # Navn vises bare ved OVER 50 %.
 
@@ -86,7 +135,7 @@ def load_person_images(name):
     return images
 
 
-def select_person_images(name):
+def select_person_images(name, require_minimum=True):
     """Første 100 unike bilder i filnavnrekkefølge; felles for trening og analyse."""
     images, seen = [], set()
     for image in load_person_images(name):
@@ -94,7 +143,7 @@ def select_person_images(name):
         if key not in seen:
             images.append(image)
             seen.add(key)
-    if len(images) < 10:
+    if require_minimum and len(images) < 10:
         raise ValueError(f"Trenger minst 10 unike bilder av {name}.")
     return images[:100]
 
@@ -110,6 +159,6 @@ def load_model(path=None):
     model = joblib.load(path)
     if not hasattr(model, "predict_proba"):
         raise ValueError("Modellen mangler predict_proba. Tren modellen på nytt.")
-    if not set(PERSON_LABELS.values()).issubset(set(model.classes_)):
-        raise ValueError("Modellens personnummer samsvarer ikke med PERSON_LABELS.")
+    if not {int(label) for label in model.classes_ if label >= 40}.issubset(NAMES):
+        raise ValueError("Modellens personnummer mangler i personregisteret. Tren modellen på nytt.")
     return model

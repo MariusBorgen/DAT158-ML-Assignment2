@@ -96,7 +96,10 @@ def load_training_data():
     y_train = list(y_train)
 
     for name, label in PERSON_LABELS.items():
-        images = select_person_images(name)
+        images = select_person_images(name, require_minimum=False)
+        if len(images) < 10:
+            print(f"Hopper over {name}: trenger minst 10 unike bilder ({len(images)} funnet).")
+            continue
         training, _ = train_test_split(images, test_size=0.2, random_state=30)
         X_train.extend(training)
         y_train.extend([label] * len(training))

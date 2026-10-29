@@ -69,7 +69,7 @@ Tren på nytt etter endringer i bildesettet, og start gjenkjenningen på nytt.
 `train.py` lagrer resultatene i `reports/training_results.npz` uten å åpne grafer.
 `plot_results.py` leser resultatene og åpner grafene uten ny trening.
 Evaluering og kamera bruker samme beslutning: høyeste sannsynlighet må være
-over 50 %, og klassen må være en av de fire navngitte personene.
+over 50 %, og klassen må finnes i personregisteret.
 Evalueringen viser riktige navn, feil navn og avvisninger på de 20 % avholdte
 bildene. Sannsynligheten er et modellestimat, ingen garanti for korrekt navn.
 Olivetti-testen måler toppklassen før avvisning; den måler ikke ukjente personer.
@@ -78,11 +78,24 @@ Olivetti-testen måler toppklassen før avvisning; den måler ikke ukjente perso
 ## Welcome Home og registrerte personer
 
 Dette er en robotdemonstrasjon som ønsker personer velkommen, uten dører eller adgangskontroll.
-Registrerte personer er Marius (40), Endre (41), David (42) og Oyvind (43).
-For en ny person: legg inn et nytt, ubrukt personnummer i `PERSON_LABELS` i
-`face_utils.py`, ta bilder og tren en ny modell. Ikke endre eksisterende numre.
+Nye installasjoner starter uten registrerte personer. Skriv et navn og trykk
+**Registrer person** i appen. Registeret lagres automatisk i `data/people.json`,
+med unike ID-er fra 40. Ta deretter bilder og tren modellen. Navn og ID-er
+hentes fra registeret av opptak, trening og gjenkjenning.
 
-Bruk `--person Marius` ved opptak for å unngå terminalspørsmål. Opptaket tar
+Fra terminalen kan du registrere og starte opptak med:
+
+```powershell
+.\.venv\Scripts\python.exe src/capture_faces.py --register "Navn"
+```
+
+Eksisterende lokale personer er overført til registeret med sine opprinnelige
+ID-er; bilder og modeller er beholdt. Registeret er privat og følger ikke med
+fra GitHub. Behold registeret sammen med bilder og modeller ved flytting.
+Trening hopper over personer med færre enn 10 unike bilder og stopper uten
+å erstatte modellen hvis ingen registrerte personer har nok bilder.
+
+Bruk `--person "Navn"` ved opptak for å unngå terminalspørsmål. Opptaket tar
 fire runder à 25 bilder med pause for endret belysning og fem sekunders
 nedtelling ved hver start. Maksimum er 100 bilder per opptaksøkt.
 Trening og analyse bruker de første 100 unike bildene per person sortert etter
@@ -117,7 +130,7 @@ Bilder tatt med 0,3 sekunders mellomrom kan være nesten identiske. Tilfeldig
 Samle en **ny, separat kameraøkt**, gjerne en annen dag, med ulike lys og vinkler:
 
 ```powershell
-.\.venv\Scripts\python.exe src/capture_faces.py --person Marius --evaluation
+.\.venv\Scripts\python.exe src/capture_faces.py --person "Navn" --evaluation
 .\.venv\Scripts\python.exe src/evaluate_session.py
 ```
 

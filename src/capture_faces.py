@@ -3,7 +3,7 @@ import cv2
 import time
 from datetime import datetime
 import argparse
-from face_utils import ROOT, PERSON_LABELS, prepare_face, detect_faces
+from face_utils import ROOT, PERSON_LABELS, prepare_face, detect_faces, register_person
 
 # Innstillinger du kan endre.
 MAX_IMAGES = 100
@@ -15,8 +15,16 @@ def main():
     # --person lar deg velge navn fra terminalen uten å endre denne filen.
     parser = argparse.ArgumentParser()
     parser.add_argument("--person", choices=PERSON_LABELS, default=None)
+    parser.add_argument("--register", metavar="NAVN", help="Registrer en ny person før opptak")
     parser.add_argument("--evaluation", action="store_true", help="Lagre separat fra treningsbildene")
     args = parser.parse_args()
+    if args.register is not None:
+        try:
+            args.person = register_person(args.register)
+        except (ValueError, OSError) as error:
+            parser.error(str(error))
+    if not PERSON_LABELS:
+        parser.error('Ingen registrerte personer. Bruk --register "Navn" eller registrer i appen.')
     if args.person is None:
         print("Registrerte personer: " + ", ".join(PERSON_LABELS))
         args.person = input("Velg person: ").strip()

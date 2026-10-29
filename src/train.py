@@ -27,13 +27,19 @@ def main():
 
     # 2. Legg til egne bilder med samme 80/20-fordeling.
     for name, label in PERSON_LABELS.items():
-        images = select_person_images(name)
+        images = select_person_images(name, require_minimum=False)
+        if len(images) < 10:
+            print(f"Hopper over {name}: trenger minst 10 unike bilder ({len(images)} funnet).")
+            continue
         training, testing = train_test_split(images, test_size=0.2, random_state=30)
         X_train.extend(training)
         X_test.extend(testing)
         y_train.extend([label] * len(training))
         y_test.extend([label] * len(testing))
         print(f"{name}: {len(training)} treningsbilder, {len(testing)} testbilder")
+
+    if not any(label >= 40 for label in y_train):
+        raise SystemExit("Ingen registrerte personer har minst 10 unike bilder. Ta bilder før trening.")
 
     X_train = np.array(X_train)
     X_test = np.array(X_test)

@@ -26,8 +26,8 @@ def main():
         except (ValueError, OSError) as error:
             parser.error(str(error))
 
-    # Hvis ingen person er spesifisert, be brukeren om å velge en fra listen over registrerte personer, eller registrere en ny person.
-    if args.person is None:
+    # Håndterer tilfellet der ingen person er spesifisert
+    if args.person is None: # Hvis ingen person er spesifisert, be brukeren om å velge en fra listen over registrerte personer, eller registrere en ny person.
         print("Registrerte personer: " + ", ".join(PERSON_LABELS))
         args.person = input("Velg person: ").strip()
         existing_name = next(

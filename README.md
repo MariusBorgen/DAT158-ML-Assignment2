@@ -1,5 +1,7 @@
 # Installasjon og bruk (Windows)
 
+Last ned video Ansiktsgjenkjenning - Tutorial.mp4 for en gjennomgang av oppsettet!
+
 ## 1. Last ned prosjektet fra GitHub
 Åpne Visual Studio Code og åpne terminalen via **Terminal → New Terminal**.
 
@@ -30,6 +32,8 @@ Kjør:
 ```
 Skriv inn navnet ditt når programmet spør.
 Programmet registrerer personen automatisk og lagrer ansiktsbildene.
+
+"Det viktig hvis flere personer skal være med i treningen at bildene blir tatt på likt tidpunkt og like lys forhold for å få bra resultat!"
 
 ## 4. Tren modellen
 Kjør:
